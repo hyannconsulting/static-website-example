@@ -69,9 +69,10 @@ Les credentials suivants doivent être configurés dans Jenkins :
 
 | Credential ID      | Type                  | Description                                  |
 |---------------------|-----------------------|----------------------------------------------|
-| `DOCKERHUB_AUTH`   | Username/Password     | Identifiants Docker Hub                      |
-| `SSH_AUTH_SERVER`   | SSH Username with key | Clé SSH pour le serveur de staging            |
-| `SSH_AUTH_PROD`    | SSH Username with key | Clé SSH pour le serveur de production         |
+| `dockerhub-credentials`   | Username/Password     | Identifiants Docker Hub                      |
+| `SSH_AUTH_SERVER`   | SSH Username with private key | Clé SSH pour les serveurs de déploiement (staging et production) |
+
+**Important :** Le credential `SSH_AUTH_SERVER` est utilisé pour les deux environnements (staging et production). Assurez-vous que la même clé SSH a accès aux deux instances EC2.
 
 Les variables suivantes doivent être définies en paramètres du job Jenkins :
 
@@ -258,6 +259,36 @@ Répétez les étapes 3 à 6 pour créer la deuxième instance EC2 (production s
 ---
 
 ## Dépannage
+
+### Erreur "No such DSL method 'sshagent'"
+
+Si vous rencontrez l'erreur :
+```
+java.lang.NoSuchMethodError: No such DSL method 'sshagent' found among steps
+```
+
+**Solution :**
+
+Le plugin SSH Agent n'est pas nécessaire avec cette pipeline. Nous utilisons `withCredentials` avec `sshUserPrivateKey` qui est une fonctionnalité native de Jenkins. Cette approche présente plusieurs avantages :
+
+1. **Pas de plugin supplémentaire requis** : `withCredentials` est disponible par défaut dans Jenkins
+2. **Meilleure sécurité** : La clé SSH est exposée uniquement dans le contexte de l'exécution du bloc
+3. **Compatibilité** : Fonctionne avec toutes les versions récentes de Jenkins
+
+La configuration dans le Jenkinsfile utilise :
+```groovy
+withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVariable: 'SSH_KEY')]) {
+    sh '''
+        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME_DEPLOY_STAGING} ...
+    '''
+}
+```
+
+**Note importante :** Assurez-vous que le credential `SSH_AUTH_SERVER` est bien configuré dans Jenkins avec :
+- Type : **SSH Username with private key**
+- ID : `SSH_AUTH_SERVER`
+- Username : `ubuntu` (ou `centos` selon votre AMI)
+- Private Key : Le contenu de votre clé privée `.pem`
 
 ### Problèmes de connexion SSH
 
