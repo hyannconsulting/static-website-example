@@ -103,7 +103,7 @@ pipeline {
         stage('Deploy in Staging') {
             agent any
             environment {
-                HOSTNAME_DEPLOY_STAGING = "ec2-13-218-146-29.compute-1.amazonaws.com"
+                HOSTNAME_DEPLOY_STAGING = "ec2-54-226-234-15.compute-1.amazonaws.com"
             }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVariable: 'SSH_KEY')]) {
@@ -126,7 +126,7 @@ pipeline {
         stage('Deploy in Production') {
             agent any
             environment {
-                HOSTNAME_DEPLOY_PROD = "ec2-98-81-176-84.compute-1.amazonaws.com"
+                HOSTNAME_DEPLOY_PROD = "ec2-13-222-142-249.compute-1.amazonaws.com"
             }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVariable: 'SSH_KEY')]) {
