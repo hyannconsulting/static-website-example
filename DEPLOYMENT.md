@@ -128,10 +128,10 @@ Deux instances EC2 sont nécessaires : une pour le **staging** et une pour la **
 
 Créez un Security Group avec les règles suivantes :
 
-| Type  | Protocole | Port | Source          | Description         |
-|-------|-----------|------|-----------------|---------------------|
-| SSH   | TCP       | 22   | IP du Jenkins   | Accès SSH Jenkins   |
-| HTTP  | TCP       | 80   | 0.0.0.0/0       | Accès web public    |
+| Type        | Protocole | Port | Source          | Description                    |
+|-------------|-----------|------|-----------------|--------------------------------|
+| SSH         | TCP       | 22   | IP du Jenkins   | Accès SSH Jenkins              |
+| Custom TCP  | TCP       | 8080 | 0.0.0.0/0       | Accès web public sur port 8080 |
 
 > **Important** : Limitez l'accès SSH à l'adresse IP de votre serveur Jenkins pour des raisons de sécurité.
 
@@ -305,4 +305,85 @@ withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVari
 
 - Vérifiez les logs Jenkins pour identifier l'étape en échec.
 - Testez la connexion SSH manuellement depuis le serveur Jenkins.
-- Vérifiez que le port 80 est accessible dans le Security Group.
+- Vérifiez que le port 8080 est accessible dans le Security Group.
+
+---
+
+## Accès au Site après le Déploiement
+
+Une fois le déploiement terminé avec succès, le site web est accessible sur les serveurs de staging et production sur le **port 8080**.
+
+### Accès à l'environnement Staging
+
+Le site de staging est accessible à l'adresse suivante :
+
+```
+http://<DNS_PUBLIC_STAGING>:8080
+```
+
+Exemple avec le DNS de staging configuré dans le Jenkinsfile :
+```
+http://ec2-54-226-234-15.compute-1.amazonaws.com:8080
+```
+
+### Accès à l'environnement Production
+
+Le site de production est accessible à l'adresse suivante :
+
+```
+http://<DNS_PUBLIC_PRODUCTION>:8080
+```
+
+Exemple avec le DNS de production configuré dans le Jenkinsfile :
+```
+http://ec2-13-222-142-249.compute-1.amazonaws.com:8080
+```
+
+### Configuration du Security Group
+
+**Important** : Pour que le site soit accessible sur le port 8080, vous devez mettre à jour les règles du Security Group de vos instances EC2.
+
+Ajoutez la règle suivante au Security Group :
+
+| Type        | Protocole | Port | Source          | Description                    |
+|-------------|-----------|------|-----------------|--------------------------------|
+| Custom TCP  | TCP       | 8080 | 0.0.0.0/0       | Accès web public sur port 8080 |
+
+#### Étapes pour ajouter la règle dans AWS Console :
+
+1. Connectez-vous à la [Console AWS](https://console.aws.amazon.com)
+2. Accédez au service **EC2**
+3. Dans le menu de gauche, cliquez sur **Security Groups**
+4. Sélectionnez le Security Group associé à vos instances
+5. Cliquez sur l'onglet **Inbound rules**
+6. Cliquez sur **Edit inbound rules**
+7. Cliquez sur **Add rule**
+8. Configurez la nouvelle règle :
+   - **Type** : Custom TCP
+   - **Port range** : 8080
+   - **Source** : 0.0.0.0/0 (ou une plage IP spécifique pour plus de sécurité)
+   - **Description** : Accès web public sur port 8080
+9. Cliquez sur **Save rules**
+
+### Vérification du Déploiement
+
+Pour vérifier que le site fonctionne correctement, vous pouvez utiliser `curl` :
+
+```bash
+# Test du serveur staging
+curl -I http://<DNS_PUBLIC_STAGING>:8080
+
+# Test du serveur production
+curl -I http://<DNS_PUBLIC_PRODUCTION>:8080
+```
+
+Une réponse avec le code `HTTP/1.1 200 OK` indique que le site est accessible et fonctionne correctement.
+
+### Accès via Navigateur Web
+
+Vous pouvez également accéder au site directement depuis votre navigateur web en entrant l'URL :
+
+- **Staging** : `http://<DNS_PUBLIC_STAGING>:8080`
+- **Production** : `http://<DNS_PUBLIC_PRODUCTION>:8080`
+
+Le site web statique devrait s'afficher correctement dans votre navigateur.
