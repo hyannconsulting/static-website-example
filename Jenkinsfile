@@ -4,6 +4,10 @@ pipeline {
         DOCKERHUB_AUTH = credentials('dockerhub-credentials')
         ID_DOCKER = "${DOCKERHUB_AUTH_USR}"
         PORT_EXPOSED = "80"
+        IMAGE_NAME = 'static-website'
+        IMAGE_TAG = 'latest'
+        APP_NAME = 'hyann-consulting'
+        IMAGE_URL = 'http://192.168.56.100'
     }
     stages {
 
@@ -58,7 +62,7 @@ pipeline {
                 script {
                     sh '''
                         echo "Running acceptance tests..."
-                        curl -s -o /dev/null -w "%{http_code}" http://172.17.0.1:${PORT_EXPOSED} | grep -q "200"
+                        curl -s -o /dev/null -w "%{http_code}" ${IMAGE_URL}:${PORT_EXPOSED} | grep -q "200"
                         echo "Acceptance tests passed."
                     '''
                 }
@@ -99,7 +103,7 @@ pipeline {
         stage('Deploy in Staging') {
             agent any
             environment {
-                HOSTNAME_DEPLOY_STAGING = "ec2-100-24-13-223.compute-1.amazonaws.com"
+                HOSTNAME_DEPLOY_STAGING = "ec2-13-218-146-29.compute-1.amazonaws.com"
             }
             steps {
                 sshagent(credentials: ['SSH_AUTH_SERVER']) {
@@ -122,7 +126,7 @@ pipeline {
         stage('Deploy in Production') {
             agent any
             environment {
-                HOSTNAME_DEPLOY_PROD = "ec2-50-17-119-91.compute-1.amazonaws.com"
+                HOSTNAME_DEPLOY_PROD = "ec2-98-81-176-84.compute-1.amazonaws.com"
             }
             steps {
                 sshagent(credentials: ['SSH_AUTH_PROD']) {
