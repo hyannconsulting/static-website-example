@@ -277,9 +277,9 @@ Le plugin SSH Agent n'est pas nécessaire avec cette pipeline. Nous utilisons `w
 
 La configuration dans le Jenkinsfile utilise :
 ```groovy
-withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVariable: 'SSH_KEY', usernameVariable: 'SSH_USER')]) {
+withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVariable: 'SSH_KEY')]) {
     sh '''
-        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME} ...
+        ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME_DEPLOY_STAGING} ...
     '''
 }
 ```
