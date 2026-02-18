@@ -129,7 +129,7 @@ pipeline {
                 HOSTNAME_DEPLOY_PROD = "ec2-98-81-176-84.compute-1.amazonaws.com"
             }
             steps {
-                sshagent(credentials: ['SSH_AUTH_PROD']) {
+                sshagent(credentials: ['SSH_AUTH_SERVER']) {
                     sh '''
                         command1="docker login -u $DOCKERHUB_AUTH_USR -p $DOCKERHUB_AUTH_PSW"
                         command2="docker pull $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
