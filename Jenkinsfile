@@ -111,7 +111,7 @@ pipeline {
                         command1="docker login -u $DOCKERHUB_AUTH_USR -p $DOCKERHUB_AUTH_PSW"
                         command2="docker pull $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         command3="docker rm -f webapp || echo 'app does not exist'"
-                        command4="docker run -d -p 8090:80 --name webapp $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
+                        command4="docker run -d -p 8090:80 --name static-website $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME_DEPLOY_STAGING} \
                             -o SendEnv=IMAGE_NAME \
                             -o SendEnv=IMAGE_TAG \
@@ -134,7 +134,7 @@ pipeline {
                         command1="docker login -u $DOCKERHUB_AUTH_USR -p $DOCKERHUB_AUTH_PSW"
                         command2="docker pull $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         command3="docker rm -f webapp || echo 'app does not exist'"
-                        command4="docker run -d -p 8090:80 --name webapp $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
+                        command4="docker run -d -p 8090:80 --name static-website $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME_DEPLOY_PROD} \
                             -o SendEnv=IMAGE_NAME \
                             -o SendEnv=IMAGE_TAG \
