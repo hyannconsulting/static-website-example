@@ -4,3 +4,4 @@ Dockerfile
 .dockerignore
 README.MD
 LICENSE.MD
+.vs
