@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKERHUB_AUTH = credentials('dockerhub-credentials')
         ID_DOCKER = "${DOCKERHUB_AUTH_USR}"
-        PORT_EXPOSED = "80"
+        PORT_EXPOSED = "8090"
         IMAGE_NAME = 'static-website'
         IMAGE_TAG = 'latest'
         APP_NAME = 'hyann-consulting'
@@ -111,7 +111,7 @@ pipeline {
                         command1="docker login -u $DOCKERHUB_AUTH_USR -p $DOCKERHUB_AUTH_PSW"
                         command2="docker pull $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         command3="docker rm -f webapp || echo 'app does not exist'"
-                        command4="docker run -d -p 80:80 --name webapp $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
+                        command4="docker run -d -p 8090:80 --name static-website $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME_DEPLOY_STAGING} \
                             -o SendEnv=IMAGE_NAME \
                             -o SendEnv=IMAGE_TAG \
@@ -134,7 +134,7 @@ pipeline {
                         command1="docker login -u $DOCKERHUB_AUTH_USR -p $DOCKERHUB_AUTH_PSW"
                         command2="docker pull $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         command3="docker rm -f webapp || echo 'app does not exist'"
-                        command4="docker run -d -p 80:80 --name webapp $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
+                        command4="docker run -d -p 8090:80 --name static-website $DOCKERHUB_AUTH_USR/$IMAGE_NAME:$IMAGE_TAG"
                         ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${HOSTNAME_DEPLOY_PROD} \
                             -o SendEnv=IMAGE_NAME \
                             -o SendEnv=IMAGE_TAG \
