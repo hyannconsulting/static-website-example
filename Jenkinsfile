@@ -7,7 +7,7 @@ pipeline {
         IMAGE_NAME = 'static-website'
         IMAGE_TAG = 'latest'
         APP_NAME = 'hyann-consulting'
-        IMAGE_URL = 'http://192.168.56.100'
+        IMAGE_URL = 'http://192.168.55.90'
     }
     stages {
 
@@ -103,7 +103,7 @@ pipeline {
         stage('Deploy in Staging') {
             agent any
             environment {
-                HOSTNAME_DEPLOY_STAGING = "ec2-54-226-234-15.compute-1.amazonaws.com"
+                HOSTNAME_DEPLOY_STAGING = "ec2-18-209-228-98.compute-1.amazonaws.com"
             }
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVariable: 'SSH_KEY')]) {
