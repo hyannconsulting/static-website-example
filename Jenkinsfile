@@ -24,6 +24,29 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            agent any
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                        sonar-scanner \
+                            -Dsonar.projectKey=${APP_NAME} \
+                            -Dsonar.projectName=${APP_NAME} \
+                            -Dsonar.sources=.
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            agent any
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
         stage('Code Quality') {
             agent any
             steps {
