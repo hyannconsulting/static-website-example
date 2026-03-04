@@ -8,7 +8,7 @@ pipeline {
         IMAGE_TAG = 'latest'
         APP_NAME = 'hyann-consulting'
         IMAGE_URL = 'http://192.168.55.90'
-        SonarKey ='e3d5dbaec7664cf28983e09b76ae9f65000669d0'
+       
     }
     stages {
 
@@ -31,7 +31,7 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
                         sonar-scanner \
-                            -Dsonar.projectKey=${SonarKey} \
+                            -Dsonar.projectKey=${sonarkey} \
                             -Dsonar.projectName=${APP_NAME} \
                             -Dsonar.sources=.
                     '''
