@@ -187,7 +187,7 @@ docker --version
 
 1. Dans Jenkins, allez dans **Manage Jenkins** > **Credentials**.
 2. Ajoutez un nouveau credential de type **SSH Username with private key**.
-3. **ID** : `SSH_AUTH_SERVER` (staging) ou `SSH_AUTH_PROD` (production).
+3. **ID** : `SSH_AUTH_SERVER` (utilisé pour staging et production).
 4. **Username** : `ubuntu`.
 5. **Private Key** : Collez le contenu du fichier `.pem` téléchargé.
 
