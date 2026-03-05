@@ -32,7 +32,7 @@ pipeline {
                     sh '''
                         sonar-scanner \
                             -Dsonar.projectKey=${sonarkey} \
-                            -Dsonar.projectName=${APP_NAME} \
+                            -Dsonar.projectName='static-website-example' \
                             -Dsonar.sources=.
                     '''
                 }
