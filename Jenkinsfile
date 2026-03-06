@@ -25,21 +25,24 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            agent any
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                        sonar-scanner \
+            stage('SonarQube Analysis') {
+                agent any
+                steps {
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                            docker run --rm \
+                                -e SONAR_HOST_URL="https://sonarcloud.io" \
+                                -e SONAR_TOKEN=${SONAR_AUTH_TOKEN} \
+                                -v "$(pwd):/usr/src" \
+                                sonarsource/sonar-scanner-cli \
                                 -Dsonar.projectKey=static-website-example-jenkins \
                                 -Dsonar.projectName=static-website-example-jenkins \
-                                -Dsonar.sources=. \
-                                -Dsonar.organization=hyannconsulting
-                    '''
+                                -Dsonar.organization=hyannconsulting \
+                                -Dsonar.sources=/usr/src
+                        '''
+                    }
                 }
             }
-        }
-
         stage('Quality Gate') {
             agent any
             steps {
