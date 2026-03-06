@@ -26,32 +26,19 @@ pipeline {
         }
     
             stage('SonarQube Analysis') {
-                agent any
-                steps {
-                    withSonarQubeEnv('SonarQube') {
-                        sh '''
-                            # Supprimer et recréer le dossier avec les bonnes permissions
-                            rm -rf "$(pwd)/.scannerwork"
-                            mkdir -p "$(pwd)/.scannerwork"
-                            chmod -R 777 "$(pwd)/.scannerwork"
-            
-                            docker run --rm \
-                                --user "$(id -u):$(id -g)" \
-                                -e SONAR_HOST_URL="https://sonarcloud.io" \
-                                -e SONAR_TOKEN=${SONAR_AUTH_TOKEN} \
-                                -e HOME=/tmp \
-                                -v "$(pwd):/usr/src" \
-                                -v "$(pwd)/.scannerwork:/usr/src/.scannerwork" \
-                                sonarsource/sonar-scanner-cli \
-                                -Dsonar.projectKey=static-website-example-jenkins \
-                                -Dsonar.projectName=static-website-example-jenkins \
-                                -Dsonar.organization=hyannconsulting \
-                                -Dsonar.sources=/usr/src \
-                                -Dsonar.working.directory=/usr/src/.scannerwork
-                        '''
+                    agent any
+                    steps {
+                        withSonarQubeEnv('SonarQube') {
+                            sh '''
+                                sonar-scanner \
+                                    -Dsonar.projectKey=static-website-example-jenkins \
+                                    -Dsonar.projectName=static-website-example-jenkins \
+                                    -Dsonar.organization=hyannconsulting \
+                                    -Dsonar.sources=.
+                            '''
+                        }
                     }
-                }
-            }
+             }
 
             stage('Quality Gate') {
                 agent any
