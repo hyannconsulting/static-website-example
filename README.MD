@@ -15,51 +15,84 @@ Cette étape construit l'image Docker de l'application à partir du `Dockerfile`
 - Commande : `docker build -t <ID_DOCKER>/<IMAGE_NAME>:<IMAGE_TAG> .`
 - L'image est basée sur `nginx:alpine` et copie les fichiers statiques du site dans le répertoire nginx.
 
-#### 2. Code Quality
+#### 2. SonarQube Analysis
 
-Cette étape vérifie la qualité du code et la validité de la configuration nginx.
+Cette étape analyse le code source avec SonarQube pour détecter les problèmes de qualité et de sécurité.
+
+- Utilise l'environnement SonarQube configuré dans Jenkins (`withSonarQubeEnv('SonarQube')`).
+- Paramètres utilisés :
+  - `sonar.projectKey` : `static-website-example-jenkins`
+  - `sonar.projectName` : `static-website-example-jenkins`
+  - `sonar.organization` : `hyannconsulting`
+  - `sonar.sources` : `.`
+
+#### 3. Quality Gate
+
+Cette étape attend le résultat de l'analyse SonarQube et bloque le pipeline si la qualité du code ne satisfait pas les critères définis.
+
+- Timeout configuré à **5 minutes**.
+- Si la Quality Gate échoue, le pipeline est interrompu (`abortPipeline: true`).
+
+#### 4. Code Quality
+
+Cette étape vérifie la validité de la configuration nginx embarquée dans l'image Docker.
 
 - Validation de la configuration nginx avec `nginx -t`.
 - Permet de détecter les erreurs de configuration avant le déploiement.
 
-#### 3. Package
+#### 5. Package
 
 Cette étape lance un conteneur Docker à partir de l'image construite pour préparer les tests.
 
 - Supprime tout conteneur précédent portant le même nom.
-- Démarre le conteneur sur le port configuré (port 80 par défaut).
+- Démarre le conteneur sur le port exposé (`PORT_EXPOSED=8090` → port 80 du conteneur).
 
 ### Review / Tests
 
 Cette étape exécute les tests d'acceptation sur le conteneur en cours d'exécution.
 
-- Vérifie que l'application répond correctement avec un code HTTP 200.
-- Nettoie le conteneur de test après l'exécution (succès ou échec).
+- Vérifie que l'application répond correctement avec un code HTTP 200 via `curl`.
+- Nettoie automatiquement le conteneur de test après l'exécution (succès ou échec).
 
 ### Push de l'Image Docker
 
 Après validation, l'image Docker est poussée vers Docker Hub.
 
-- Authentification sur Docker Hub avec les credentials Jenkins.
+- Authentification sur Docker Hub avec les credentials Jenkins (`dockerhub-credentials`).
 - Push de l'image taguée vers le registre.
 
 ### Pipeline CD (Déploiement Continu)
 
-#### 5. Deploy in Staging
+#### 7. Deploy in Staging
 
 Déploie l'application sur le serveur de staging AWS.
 
-- Connexion SSH vers l'instance EC2 de staging.
+- Connexion SSH vers l'instance EC2 de staging (`ec2-18-208-200-72.compute-1.amazonaws.com`).
 - Pull de l'image Docker depuis Docker Hub.
-- Suppression de l'ancien conteneur et lancement du nouveau.
+- Suppression de l'ancien conteneur et lancement du nouveau sur le port 8090.
 
-#### 6. Deploy in Production
+#### 8. Deploy in Production
 
 Déploie l'application sur le serveur de production AWS.
 
-- Connexion SSH vers l'instance EC2 de production.
+- Connexion SSH vers l'instance EC2 de production (`ec2-3-215-181-230.compute-1.amazonaws.com`).
 - Pull de l'image Docker depuis Docker Hub.
-- Suppression de l'ancien conteneur et lancement du nouveau.
+- Suppression de l'ancien conteneur et lancement du nouveau sur le port 8090.
+
+---
+
+## Variables d'Environnement du Jenkinsfile
+
+Les variables suivantes sont définies directement dans le `Jenkinsfile` :
+
+| Variable               | Valeur                    | Description                                      |
+|------------------------|---------------------------|--------------------------------------------------|
+| `ID_DOCKER`            | `$DOCKERHUB_AUTH_USR`     | Identifiant Docker Hub (issu des credentials)    |
+| `PORT_EXPOSED`         | `8090`                    | Port exposé sur les serveurs de déploiement      |
+| `IMAGE_NAME`           | `static-website`          | Nom de l'image Docker                            |
+| `IMAGE_TAG`            | `latest`                  | Tag de l'image Docker                            |
+| `APP_NAME`             | `hyann-consulting`         | Nom de l'application                             |
+| `IMAGE_URL`            | `http://192.168.55.90`    | URL locale utilisée pour les tests d'acceptation |
 
 ---
 
@@ -67,19 +100,14 @@ Déploie l'application sur le serveur de production AWS.
 
 Les credentials suivants doivent être configurés dans Jenkins :
 
-| Credential ID      | Type                  | Description                                  |
-|---------------------|-----------------------|----------------------------------------------|
-| `dockerhub-credentials`   | Username/Password     | Identifiants Docker Hub                      |
-| `SSH_AUTH_SERVER`   | SSH Username with private key | Clé SSH pour les serveurs de déploiement (staging et production) |
+| Credential ID           | Type                          | Description                                                         |
+|-------------------------|-------------------------------|---------------------------------------------------------------------|
+| `dockerhub-credentials` | Username/Password             | Identifiants Docker Hub (utilisé via `$DOCKERHUB_AUTH_USR/PSW`)    |
+| `SSH_AUTH_SERVER`       | SSH Username with private key | Clé SSH pour les serveurs de déploiement (staging et production)    |
 
 **Important :** Le credential `SSH_AUTH_SERVER` est utilisé pour les deux environnements (staging et production). Assurez-vous que la même clé SSH a accès aux deux instances EC2.
 
-Les variables suivantes doivent être définies en paramètres du job Jenkins :
-
-| Variable       | Description                         |
-|----------------|-------------------------------------|
-| `IMAGE_NAME`  | Nom de l'image Docker               |
-| `IMAGE_TAG`   | Tag de l'image Docker (ex: latest)  |
+Le plugin **SonarQube Scanner** doit être installé sur l'agent Jenkins et un environnement SonarQube nommé `SonarQube` doit être configuré dans **Manage Jenkins > Configure System**.
 
 ---
 
@@ -187,14 +215,16 @@ docker --version
 
 1. Dans Jenkins, allez dans **Manage Jenkins** > **Credentials**.
 2. Ajoutez un nouveau credential de type **SSH Username with private key**.
-3. **ID** : `SSH_AUTH_SERVER` (staging) ou `SSH_AUTH_PROD` (production).
+3. **ID** : `SSH_AUTH_SERVER`.
 4. **Username** : `ubuntu`.
 5. **Private Key** : Collez le contenu du fichier `.pem` téléchargé.
+
+> **Note** : Un seul credential `SSH_AUTH_SERVER` est utilisé pour les deux environnements (staging et production). Assurez-vous que la clé SSH associée a accès aux deux instances EC2.
 
 #### Docker Hub
 
 1. Ajoutez un credential de type **Username with password**.
-2. **ID** : `DOCKERHUB_AUTH`.
+2. **ID** : `dockerhub-credentials`.
 3. Renseignez votre identifiant et mot de passe Docker Hub.
 
 ### Étape 7 : Mettre à jour les hostnames dans le Jenkinsfile
@@ -204,12 +234,12 @@ Remplacez les valeurs des variables d'environnement dans le `Jenkinsfile` par le
 ```groovy
 // Staging
 environment {
-    HOSTNAME_DEPLOY_STAGING = "ec2-xxx-xxx-xxx-xxx.compute-1.amazonaws.com"
+    HOSTNAME_DEPLOY_STAGING = "ec2-18-208-200-72.compute-1.amazonaws.com"
 }
 
 // Production
 environment {
-    HOSTNAME_DEPLOY_PROD = "ec2-xxx-xxx-xxx-xxx.compute-1.amazonaws.com"
+    HOSTNAME_DEPLOY_PROD = "ec2-3-215-181-230.compute-1.amazonaws.com"
 }
 ```
 
@@ -228,31 +258,41 @@ Répétez les étapes 3 à 6 pour créer la deuxième instance EC2 (production s
                     │   Jenkins   │
                     └──────┬──────┘
                            │
-              ┌────────────┼────────────┐
-              │            │            │
-              ▼            ▼            ▼
-        ┌──────────┐ ┌──────────┐ ┌──────────┐
-        │  Build   │ │  Code    │ │ Package  │
-        │  Image   │ │ Quality  │ │          │
-        └──────────┘ └──────────┘ └──────────┘
+          ┌────────────────▼────────────────┐
+          │             Build               │
+          └────────────────┬────────────────┘
                            │
-                           ▼
-                    ┌──────────────┐
-                    │ Review/Tests │
-                    └──────┬───────┘
+          ┌────────────────▼────────────────┐
+          │       SonarQube Analysis        │
+          └────────────────┬────────────────┘
                            │
-                           ▼
-                    ┌──────────────┐
-                    │  Docker Hub  │
-                    │    Push      │
-                    └──────┬───────┘
+          ┌────────────────▼────────────────┐
+          │          Quality Gate           │
+          └────────────────┬────────────────┘
                            │
-              ┌────────────┴────────────┐
-              ▼                         ▼
-     ┌────────────────┐       ┌────────────────┐
-     │  EC2 Staging   │       │ EC2 Production │
-     │  (AWS)         │       │ (AWS)          │
-     └────────────────┘       └────────────────┘
+          ┌────────────────▼────────────────┐
+          │          Code Quality           │
+          └────────────────┬────────────────┘
+                           │
+          ┌────────────────▼────────────────┐
+          │             Package             │
+          └────────────────┬────────────────┘
+                           │
+          ┌────────────────▼────────────────┐
+          │          Review / Tests         │
+          └────────────────┬────────────────┘
+                           │
+          ┌────────────────▼────────────────┐
+          │     Login and Push to           │
+          │          Docker Hub             │
+          └────────────────┬────────────────┘
+                           │
+             ┌─────────────┴─────────────┐
+             ▼                           ▼
+    ┌────────────────┐       ┌────────────────┐
+    │  EC2 Staging   │       │ EC2 Production │
+    │  (AWS)         │       │ (AWS)          │
+    └────────────────┘       └────────────────┘
 ```
 
 ---
@@ -289,6 +329,12 @@ withCredentials([sshUserPrivateKey(credentialsId: 'SSH_AUTH_SERVER', keyFileVari
 - Username : `ubuntu`
 - Private Key : Le contenu de votre clé privée `.pem`
 
+### Erreur SonarQube / Quality Gate
+
+- Assurez-vous que le plugin **SonarQube Scanner** est installé dans Jenkins.
+- Vérifiez que l'environnement SonarQube est bien nommé `SonarQube` dans **Manage Jenkins > Configure System**.
+- Le timeout de la Quality Gate est de 5 minutes. Si l'analyse prend plus longtemps, augmentez la valeur dans le Jenkinsfile.
+
 ### Problèmes de connexion SSH
 
 - Vérifiez que le Security Group autorise le port 22 depuis l'IP Jenkins.
@@ -322,7 +368,7 @@ http://<DNS_PUBLIC_STAGING>:8090
 
 Exemple avec le DNS de staging configuré dans le Jenkinsfile :
 ```
-http://ec2-54-226-234-15.compute-1.amazonaws.com:8090
+http://ec2-18-208-200-72.compute-1.amazonaws.com:8090
 ```
 
 ### Accès à l'environnement Production
@@ -335,7 +381,7 @@ http://<DNS_PUBLIC_PRODUCTION>:8090
 
 Exemple avec le DNS de production configuré dans le Jenkinsfile :
 ```
-http://ec2-13-222-142-249.compute-1.amazonaws.com:8090
+http://ec2-3-215-181-230.compute-1.amazonaws.com:8090
 ```
 
 ### Configuration du Security Group
