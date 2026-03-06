@@ -31,8 +31,8 @@ pipeline {
                 withSonarQubeEnv('sonarkey') {
                     sh '''
                         sonar-scanner \
-                            -Dsonar.projectKey=${sonarkey} \
-                            -Dsonar.projectName='static-website-example' \
+                            -Dsonar.projectKey='static-website-example-jenkins' \
+                            -Dsonar.projectName='static-website-example-jenkins' \
                             -Dsonar.sources=.
                     '''
                 }
