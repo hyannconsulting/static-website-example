@@ -436,9 +436,11 @@ Le site web statique devrait s'afficher correctement dans votre navigateur.
 ---
 ## Resultat du pipeline
 
-![alt text](<_result/image_I.png>)
+![alt text](<_result/image_3.png>)
 
 ---
 ## Apres deploiement
 
 ![alt text](<_result/image_II.png>)
+
+![alt text](<_result/image_4.png>)
