@@ -31,9 +31,10 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
                         sonar-scanner \
-                            -Dsonar.projectKey='static-website-example-jenkins' \
-                            -Dsonar.projectName='static-website-example-jenkins' \
-                            -Dsonar.sources=.
+                                -Dsonar.projectKey=static-website-example-jenkins \
+                                -Dsonar.projectName=static-website-example-jenkins \
+                                -Dsonar.sources=. \
+                                -Dsonar.organization=hyannconsulting
                     '''
                 }
             }
