@@ -24,29 +24,27 @@ pipeline {
                 }
             }
         }
-
-       
-
-  stage('SonarQube Analysis') {
-    agent any
-    steps {
-        withSonarQubeEnv('SonarQube') {
-            sh '''
-                docker run --rm \
-                    -e SONAR_HOST_URL="https://sonarcloud.io" \
-                    -e SONAR_TOKEN=${SONAR_AUTH_TOKEN} \
-                    -v "$(pwd):/usr/src" \
-                    -v "$(pwd)/.scannerwork:/tmp/.scannerwork" \
-                    sonarsource/sonar-scanner-cli \
-                    -Dsonar.projectKey=static-website-example-jenkins \
-                    -Dsonar.projectName=static-website-example-jenkins \
-                    -Dsonar.organization=hyannconsulting \
-                    -Dsonar.sources=/usr/src \
-                    -Dsonar.working.directory=/tmp/.scannerwork
-            '''
+    
+        stage('SonarQube Analysis') {
+            agent any
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                        docker run --rm \
+                            --user "$(id -u):$(id -g)" \
+                            -e SONAR_HOST_URL="https://sonarcloud.io" \
+                            -e SONAR_TOKEN=${SONAR_AUTH_TOKEN} \
+                            -v "$(pwd):/usr/src" \
+                            sonarsource/sonar-scanner-cli \
+                            -Dsonar.projectKey=static-website-example-jenkins \
+                            -Dsonar.projectName=static-website-example-jenkins \
+                            -Dsonar.organization=hyannconsulting \
+                            -Dsonar.sources=/usr/src \
+                            -Dsonar.working.directory=/usr/src/.scannerwork
+                    '''
+                }
+            }
         }
-    }
-}
 
 stage('Quality Gate') {
     agent any
