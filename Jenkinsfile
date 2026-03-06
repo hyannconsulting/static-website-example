@@ -28,7 +28,7 @@ pipeline {
         stage('SonarQube Analysis') {
             agent any
             steps {
-                withSonarQubeEnv('SONAR_TOKEN') {
+                withSonarQubeEnv('SonarQube') {
                     sh '''
                         sonar-scanner \
                             -Dsonar.projectKey='static-website-example-jenkins' \
